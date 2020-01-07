@@ -7,37 +7,12 @@ from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
 
 
-def geometric_median(points, method='auto', options={}):
+def geometric_median(points):
     """
     Calculates the geometric median of an array of points.
-    method specifies which algorithm to use:
-        * 'auto' -- uses a heuristic to pick an algorithm
-        * 'minimize' -- scipy.optimize the sum of distances
-        * 'weiszfeld' -- Weiszfeld's algorithm
-    """
-
-    points = np.asarray(points)
-
-    if len(points.shape) == 1:
-        # geometric_median((0, 0)) has too much potential for error.
-        # Did the user intend a single 2D point or two scalars?
-        # Use np.median if you meant the latter.
-        raise ValueError("Expected 2D array")
-
-    if method == 'auto':
-        if points.shape[1] > 2:
-            method = 'weiszfeld'
-
-    return _methods[method](points, options)
-
-
-def weiszfeld_method(points, options={}):
-    """
     Weiszfeld's algorithm as described on Wikipedia.
     """
-    default_options = {'maxiter': 1000, 'tol': 1e-5}
-    default_options.update(options)
-    options = default_options
+    points = np.asarray(points)
 
     def distance_func(x):
         return cdist([x], points)
@@ -47,22 +22,16 @@ def weiszfeld_method(points, options={}):
 
     iters = 0
 
-    while iters < options['maxiter']:
+    while iters < 1000:
         distances = distance_func(guess).T
-        # catch divide by zero
-        # TODO: Wikipedia cites how to deal with distance 0
         distances = np.where(distances == 0, 1, distances)
         guess_next = (points/distances).sum(axis=0) / (1./distances).sum(axis=0)
         guess_movement = np.sqrt(((guess - guess_next)**2).sum())
         guess = guess_next
-        if guess_movement <= options['tol']:
+        if guess_movement <= 1e-5:
             break
 
         iters += 1
 
     return guess
 
-
-_methods = {
-    'weiszfeld': weiszfeld_method,
-}
