@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block head %} 
+<!-- header here  -->
+{% endblock %}
+
+{% block body %}
+<div class="form-group">
+    <center><h3>Update Person</h3></center>
+    <form action="/update/{{person.id}}" method="POST">
+        <h5><center>Name: <input type="text" name="name" id="name" value="{{person.name}}"></center></h5>
+        <h5><center>Latitude: <input type="number" step="0.000001" name="latitude" id="latitude" max="90" min"-90" required="True" value="{{person.latitude}}"></center></h5>
+        <h5><center>Longitude: <input type="number" step="0.000001" name="longitude" id="longitude" max="180" min"-180" required="True" value="{{person.longitude}}"></center></h5>
+        <center><input class="btn btn-primary" type="submit" value="Update"></center>
+    </form>
+</div>
+<br>
+<h3><a href="/">Back</a></h3>
+{% endblock %}

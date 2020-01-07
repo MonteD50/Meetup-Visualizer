@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block head %} 
+<header>
+    <nav class="menu">
+      <div class="header-wrapper">
+        <h2>Geometric Median Visualizer</h2>
+            <a href="https://www.latlong.net/" target="_blank"><b>Latitude/Longitude Lookup</b></a>
+        </nav>
+      </div>
+      <br>
+      <h5>The Geometric Median "minimizes the sum of distances between the sample points" <a href="https://en.wikipedia.org/wiki/Geometric_median" target="_blank">Wikipedia</a>. This can thus be used to estimate the optimal (each person traveling the smallest distance possible) meetup location of people as this visualizer shows with Google Maps. </h5>
+  </header>
+{% endblock %}
+
+{% block body %}
+<h3>Add, Delete and Update People</h3>
+{% if people|length < 1 %}
+  <h4>Add a person below.</h4>
+{% else %}
+    <div class="table-responsive">
+        <div class="tableInput" style="height: 150px;">
+            <table class="table table-striped table-hover table-sm" id="table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Name:</th>
+                        <th>Latitude:</th>
+                        <th>Longitude:</th>
+                        <th>Actions:</th>
+                    </tr>
+                </thead>
+                {% for po in people %}
+                    <tr>
+                        <td id="name">{% if po.name == ''%} Anonymous {% else %} {{po.name}}  {% endif %}</td>
+                        <td id="latitude">{{po.latitude}}</td>
+                        <td id="longitude">{{po.longitude}}</td>
+                        <td>
+                            <a href="/delete/{{po.id}}">Delete</a>
+                            <br>
+                            <a href="/update/{{po.id}}">Update</a>
+                        </td>
+                    </tr >
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endif %}
+<table style="float: left;">
+    <thead>
+        <tr>
+            <th>Legend: </th>
+        </tr>
+        <tr>
+            <td>People</td>
+            <td>&nbsp;<img src="{{ url_for('static', filename='images/marker_redP.png') }}" alt="People Icon Image"></td>
+        </tr>
+        <tr>
+            <td>Optimal Meetup Point</td>
+            <td><img src="{{ url_for('static', filename='images/blue-dot.png') }}" alt="Optimal Icon Image"></td>
+        </tr>
+    </thead>
+
+
+</table>
+<form action="/" method="POST">
+    <h5><center>Name: <input type="text" name="name" id="name" placeholder="John Snow"></center> </h5>
+    <h5><center>Latitude: <input type="number" step="0.000001" name="latitude" id="latitude" max="90" min"-90" required="True" placeholder="39.621205"></center></h5>
+    <h5><center>Longitude: <input type="number" step="0.000001" name="longitude" id="longitude" max="180" min"-180" required="True" placeholder="-121.106112"></center></h5>
+    <center><input class="btn btn-primary" type="submit" value="Add Person"></center>
+</form>
+<br>
+<div id="map"style="width: 100%; height: 75%; position: absolute; left:-0px;">
+    <div id="map-canvas"></div>
+    <script>
+      var map;
+      var myTab = document.getElementById('table');
+      function initMap() {
+        try {
+            var latitudeCenter = parseFloat("{{geomMedian[0]}}");
+            var longitudeCenter = parseFloat("{{geomMedian[1]}}");
+        } catch(err) {
+            var latitudeCenter = 46.227638;
+            var longitudeCenter = 2.213749;
+        }
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: latitudeCenter, lng: longitudeCenter},
+          zoom: 4
+        });
+        try {
+            for (i = 1; i < myTab.rows.length; i++) {
+            var objCells = myTab.rows.item(i).cells;
+            //window.alert(objCells.item(0).innerHTML)
+            var position = {lat: parseFloat(objCells.item(1).innerHTML), lng: parseFloat(objCells.item(2).innerHTML)};
+            var marker = new google.maps.Marker({position: position, map: map, title: objCells.item(0).innerHTML + "\nLatitude: " + objCells.item(1).innerHTML + "\nLongitude: " + objCells.item(2).innerHTML, icon:"{{ url_for('static', filename='images/marker_redP.png') }}"});
+            var polyLine = new google.maps.Polyline({
+                path: [{lat: parseFloat(objCells.item(1).innerHTML), lng: parseFloat(objCells.item(2).innerHTML)}, {lat: latitudeCenter, lng: longitudeCenter}],
+                geodesic: true,
+                strokeColor: '#000000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2  
+            });
+            polyLine.setMap(map)
+            }
+            var ps = {lat: latitudeCenter, lng: longitudeCenter}
+            var optimalMeetupPointMarker = new google.maps.Marker({position: ps, map: map, title: "Optimal Meetup Point\nLatitude: " + latitudeCenter + "\nLongitude: " + longitudeCenter, icon: {url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"}})
+        } catch (err) {}
+      }
+</script>
+<script 
+src="https://maps.googleapis.com/maps/api/js?key={{key}}&callback=initMap"
+    async defer></script>
+</div>
+
+
+{% endblock %}
