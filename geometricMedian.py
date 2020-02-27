@@ -1,5 +1,5 @@
 """
-the code for geometric median is from https://github.com/mrwojo/geometric_median/blob/master/geometric_median/geometric_median.py
+the code for geometric median is adapted from https://github.com/mrwojo/geometric_median/blob/master/geometric_median/geometric_median.py
 """
 
 import numpy as np
